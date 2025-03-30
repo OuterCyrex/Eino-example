@@ -2,12 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
-	redisIndexer "github.com/cloudwego/eino-ext/components/indexer/redis"
+	redisInd "github.com/cloudwego/eino-ext/components/indexer/redis"
 )
 
 func (r *RAGEngine) newIndexer(ctx context.Context) {
-	i, err := redisIndexer.NewIndexer(ctx, &redisIndexer.IndexerConfig{
+	i, err := redisInd.NewIndexer(ctx, &redisInd.IndexerConfig{
 		Client:           r.redis,
 		KeyPrefix:        r.prefix,
 		DocumentToHashes: nil,
@@ -21,8 +20,7 @@ func (r *RAGEngine) newIndexer(ctx context.Context) {
 }
 
 func (r *RAGEngine) InitVectorIndex(ctx context.Context) error {
-	_, err := r.redis.Do(ctx, "FT.INFO", r.indexName).Result()
-	if err == nil {
+	if _, err := r.redis.Do(ctx, "FT.INFO", r.indexName).Result(); err == nil {
 		return nil
 	}
 
@@ -40,13 +38,11 @@ func (r *RAGEngine) InitVectorIndex(ctx context.Context) error {
 	}
 
 	if err := r.redis.Do(ctx, createIndexArgs...).Err(); err != nil {
-		return fmt.Errorf("failed to create index: %w", err)
+		return err
 	}
 
-	_, err = r.redis.Do(ctx, "FT.INFO", r.indexName).Result()
-	if err != nil {
-		return fmt.Errorf("failed to verify index creation: %w", err)
+	if _, err := r.redis.Do(ctx, "FT.INFO", r.indexName).Result(); err != nil {
+		return err
 	}
-
 	return nil
 }

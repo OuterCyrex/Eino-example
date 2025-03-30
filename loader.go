@@ -12,7 +12,7 @@ func (r *RAGEngine) newLoader(ctx context.Context) {
 	})
 	if err != nil {
 		r.Err = err
+		return
 	}
-
 	r.Loader = l
 }

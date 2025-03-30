@@ -6,14 +6,15 @@ import (
 )
 
 func (r *RAGEngine) newSplitter(ctx context.Context) {
-	config := &markdown.HeaderConfig{
+	t, err := markdown.NewHeaderSplitter(ctx, &markdown.HeaderConfig{
 		Headers: map[string]string{
 			"#": "title",
 		},
-		TrimHeaders: false}
-	t, err := markdown.NewHeaderSplitter(ctx, config)
+		TrimHeaders: false,
+	})
 	if err != nil {
 		r.Err = err
+		return
 	}
-	r.Transformer = t
+	r.Splitter = t
 }

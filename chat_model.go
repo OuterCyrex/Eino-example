@@ -6,14 +6,14 @@ import (
 )
 
 func (r *RAGEngine) newChatModel(ctx context.Context) {
-	c, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
+	m, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
 		APIKey: r.config.ApiKey,
 		Model:  r.config.ChatModel,
 	})
-
 	if err != nil {
 		r.Err = err
+		return
 	}
 
-	r.ChatModel = c
+	r.ChatModel = m
 }

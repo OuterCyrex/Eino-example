@@ -8,58 +8,63 @@ import (
 	"io"
 )
 
-var (
-	indexName = "index_test"
-	prefix    = "2025:"
+const (
+	prefix = "OuterCyrex:"
+	index  = "OuterIndex"
 )
 
 func main() {
 	ctx := context.Background()
 
-	rag, err := InitRAGClient(ctx, prefix, indexName)
+	r, err := InitRAGEngine(ctx, index, prefix)
 	if err != nil {
 		panic(err)
 	}
 
-	docs, err := rag.Loader.Load(ctx, document.Source{
+	doc, err := r.Loader.Load(ctx, document.Source{
 		URI: "./test_txt/mysql-1.md",
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	ted, err := rag.Transformer.Transform(ctx, docs)
+	docs, err := r.Splitter.Transform(ctx, doc)
 	if err != nil {
 		panic(err)
 	}
-	for _, doc := range ted {
+
+	for _, d := range docs {
 		uuid, _ := uuid2.NewUUID()
-		doc.ID = uuid.String()
+		d.ID = uuid.String()
 	}
 
-	err = rag.InitVectorIndex(ctx)
+	err = r.InitVectorIndex(ctx)
 	if err != nil {
 		panic(err)
 	}
 
-	_, err = rag.Indexer.Store(ctx, ted)
+	_, err = r.Indexer.Store(ctx, docs)
 	if err != nil {
 		panic(err)
 	}
 
-	output, err := rag.Generate(ctx, "介绍一下什么是存储引擎呢")
-	if err != nil {
-		panic(err)
-	}
+	var query string
 
 	for {
-		o, e := output.Recv()
-		if e == io.EOF {
-			break
+		_, _ = fmt.Scan(&query)
+		output, err := r.Generate(ctx, query)
+		if err != nil {
+			panic(err)
 		}
-		if e != nil {
-			panic(e)
+		for {
+			o, err := output.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				panic(err)
+			}
+			fmt.Println(o.Content)
 		}
-		fmt.Println(o.Content)
 	}
 }

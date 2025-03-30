@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/cloudwego/eino-ext/components/document/loader/file"
 	embedding "github.com/cloudwego/eino-ext/components/embedding/ark"
-	redisIndexer "github.com/cloudwego/eino-ext/components/indexer/redis"
+	redisInd "github.com/cloudwego/eino-ext/components/indexer/redis"
 	"github.com/cloudwego/eino-ext/components/model/ark"
 	redisRet "github.com/cloudwego/eino-ext/components/retriever/redis"
 	"github.com/cloudwego/eino/components/document"
@@ -26,15 +26,15 @@ type RAGEngine struct {
 
 	Err error
 
-	Loader      *file.FileLoader
-	Transformer document.Transformer
-	Retriever   *redisRet.Retriever
-	Indexer     *redisIndexer.Indexer
-	ChatModel   *ark.ChatModel
+	Loader    *file.FileLoader
+	Splitter  document.Transformer
+	Retriever *redisRet.Retriever
+	Indexer   *redisInd.Indexer
+	ChatModel *ark.ChatModel
 }
 
-func InitRAGClient(ctx context.Context, prefix string, index string) (*RAGEngine, error) {
-	r, err := initRAGClient(ctx, prefix, index)
+func InitRAGEngine(ctx context.Context, index string, prefix string) (*RAGEngine, error) {
+	r, err := initRAGEngine(ctx, index, prefix)
 	if err != nil {
 		return nil, err
 	}
@@ -45,10 +45,11 @@ func InitRAGClient(ctx context.Context, prefix string, index string) (*RAGEngine
 	r.newRetriever(ctx)
 	r.newChatModel(ctx)
 
-	return r, r.Err
+	return r, nil
 }
 
-func initRAGClient(ctx context.Context, prefix string, index string) (*RAGEngine, error) {
+func initRAGEngine(ctx context.Context, index string, prefix string) (*RAGEngine, error) {
+
 	c := config.Map()
 
 	embedder, err := embedding.NewEmbedder(ctx, &embedding.EmbeddingConfig{
@@ -73,11 +74,11 @@ func initRAGClient(ctx context.Context, prefix string, index string) (*RAGEngine
 		}),
 		embedder: embedder,
 
-		Loader:      nil,
-		Transformer: nil,
-		Retriever:   nil,
-		Indexer:     nil,
-		ChatModel:   nil,
+		Loader:    nil,
+		Splitter:  nil,
+		Retriever: nil,
+		Indexer:   nil,
+		ChatModel: nil,
 	}, nil
 }
 
@@ -100,15 +101,20 @@ here's documents searched for you:
 
 func (r *RAGEngine) Generate(ctx context.Context, query string) (*schema.StreamReader[*schema.Message], error) {
 	docs, err := r.Retriever.Retrieve(ctx, query)
-
 	if err != nil {
 		return nil, err
 	}
-	t := prompt.FromMessages(schema.FString, []schema.MessagesTemplate{
+
+	fmt.Println("-------------------------------------------")
+	fmt.Println(docs)
+	fmt.Println("-------------------------------------------")
+
+	tpl := prompt.FromMessages(schema.FString, []schema.MessagesTemplate{
 		schema.SystemMessage(systemPrompt),
 		schema.UserMessage("question: {content}"),
 	}...)
-	mes, err := t.Format(ctx, map[string]any{
+
+	messages, err := tpl.Format(ctx, map[string]any{
 		"documents": docs,
 		"content":   query,
 	})
@@ -116,5 +122,5 @@ func (r *RAGEngine) Generate(ctx context.Context, query string) (*schema.StreamR
 		return nil, err
 	}
 
-	return r.ChatModel.Stream(ctx, mes)
+	return r.ChatModel.Stream(ctx, messages)
 }
