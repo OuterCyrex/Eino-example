@@ -15,7 +15,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type RAGClient struct {
+type RAGEngine struct {
 	indexName string
 	prefix    string
 	config    *config.ParamsConfig
@@ -33,7 +33,7 @@ type RAGClient struct {
 	ChatModel   *ark.ChatModel
 }
 
-func InitRAGClient(ctx context.Context, prefix string, index string) (*RAGClient, error) {
+func InitRAGClient(ctx context.Context, prefix string, index string) (*RAGEngine, error) {
 	r, err := initRAGClient(ctx, prefix, index)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func InitRAGClient(ctx context.Context, prefix string, index string) (*RAGClient
 	return r, r.Err
 }
 
-func initRAGClient(ctx context.Context, prefix string, index string) (*RAGClient, error) {
+func initRAGClient(ctx context.Context, prefix string, index string) (*RAGEngine, error) {
 	c := config.Map()
 
 	embedder, err := embedding.NewEmbedder(ctx, &embedding.EmbeddingConfig{
@@ -60,7 +60,7 @@ func initRAGClient(ctx context.Context, prefix string, index string) (*RAGClient
 		return nil, err
 	}
 
-	return &RAGClient{
+	return &RAGEngine{
 		indexName: index,
 		prefix:    prefix,
 		config:    c,
@@ -98,7 +98,7 @@ here's documents searched for you:
 ==== doc end ====
 `
 
-func (r *RAGClient) Generate(ctx context.Context, query string) (*schema.StreamReader[*schema.Message], error) {
+func (r *RAGEngine) Generate(ctx context.Context, query string) (*schema.StreamReader[*schema.Message], error) {
 	docs, err := r.Retriever.Retrieve(ctx, query)
 
 	if err != nil {

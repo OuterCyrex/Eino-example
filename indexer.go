@@ -6,7 +6,7 @@ import (
 	redisIndexer "github.com/cloudwego/eino-ext/components/indexer/redis"
 )
 
-func (r *RAGClient) newIndexer(ctx context.Context) {
+func (r *RAGEngine) newIndexer(ctx context.Context) {
 	i, err := redisIndexer.NewIndexer(ctx, &redisIndexer.IndexerConfig{
 		Client:           r.redis,
 		KeyPrefix:        r.prefix,
@@ -20,7 +20,7 @@ func (r *RAGClient) newIndexer(ctx context.Context) {
 	r.Indexer = i
 }
 
-func (r *RAGClient) InitVectorIndex(ctx context.Context) error {
+func (r *RAGEngine) InitVectorIndex(ctx context.Context) error {
 	_, err := r.redis.Do(ctx, "FT.INFO", r.indexName).Result()
 	if err == nil {
 		return nil

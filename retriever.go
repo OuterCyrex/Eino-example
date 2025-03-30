@@ -5,7 +5,7 @@ import (
 	redisRet "github.com/cloudwego/eino-ext/components/retriever/redis"
 )
 
-func (r *RAGClient) newRetriever(ctx context.Context) {
+func (r *RAGEngine) newRetriever(ctx context.Context) {
 	re, err := redisRet.NewRetriever(ctx, &redisRet.RetrieverConfig{
 		Client:       r.redis,
 		Index:        r.indexName,

@@ -5,7 +5,7 @@ import (
 	"github.com/cloudwego/eino-ext/components/document/transformer/splitter/markdown"
 )
 
-func (r *RAGClient) newTransformer(ctx context.Context) {
+func (r *RAGEngine) newTransformer(ctx context.Context) {
 	config := &markdown.HeaderConfig{
 		Headers: map[string]string{
 			"#": "title",
