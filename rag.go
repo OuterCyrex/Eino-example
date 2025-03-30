@@ -40,7 +40,7 @@ func InitRAGClient(ctx context.Context, prefix string, index string) (*RAGEngine
 	}
 
 	r.newLoader(ctx)
-	r.newTransformer(ctx)
+	r.newSplitter(ctx)
 	r.newIndexer(ctx)
 	r.newRetriever(ctx)
 	r.newChatModel(ctx)
